@@ -1,0 +1,16 @@
+[package]
+name = "swcli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ureq = { version = "3.2", features = ["json"] } # Minimal HTTP client
+serde_json = "1.0"                              # JSON parsing
+chrono = "0.4"                                  # Timestamps for SigV4
+hmac = "0.12"                                   # Cryptography for SigV4
+sha2 = "0.10"                                   # Cryptography for SigV4
+hex = "0.4"                                     # Hex encoding
+urlencoding = "2.1"                             # URL escaping
+dirs = "6.0"                                    # Resolving ~/.aws correctly
+anyhow = "1.0.102"                              # Error handling
+serde = { version = "1.0.228", features = ["derive"] }

@@ -13,25 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: jdx/mise-action@v3
         with:
-          components: rustfmt, clippy
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Check formatting
-        run: cargo fmt --all --check
-
-      - name: Run clippy (Linting)
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Typecheck
-        run: cargo check
-
-      - name: Run tests
-        run: cargo test --verbose
+          install: true
+          cache: true
+      - name: Run static analysis
+        run: prek run
+      - name: Tests
+        run: cargo test

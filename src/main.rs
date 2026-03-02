@@ -1,10 +1,11 @@
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
+use ini::Ini;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
-use std::fs;
 use std::path::PathBuf;
+use std::{env, fs};
 
 const DOMAIN: &str = "smartway";
 const DOMAIN_OWNER: &str = "007065811408";
@@ -15,7 +16,7 @@ struct SsoConfig {
     sso_region: String,
     sso_account_id: String,
     sso_role_name: String,
-    region: String,
+    region: String, // Target region for resources and operations
 }
 
 #[derive(Deserialize, Debug)]
@@ -37,6 +38,48 @@ fn get_aws_directory() -> Result<PathBuf> {
     let mut dir = dirs::home_dir().context("Could not find home directory")?;
     dir.push(".aws");
     Ok(dir)
+}
+
+fn get_sso_config(profile: &str) -> Result<SsoConfig> {
+    let config_path = get_aws_directory()?.join("config");
+    let conf = Ini::load_from_file(&config_path).context("Failed to read ~/.aws/config")?;
+
+    let section_name = if profile == "default" {
+        "default".to_string()
+    } else {
+        format!("profile {}", profile)
+    };
+
+    let profile_section = conf
+        .section(Some(&section_name))
+        .with_context(|| format!("Profile '{}' not found in config", profile))?;
+
+    let sso_session_name = profile_section
+        .get("sso_session")
+        .with_context(|| format!("Profile '{}' does not specify a sso_session", profile))?;
+
+    let sso_session_section = conf
+        .section(Some(format!("sso-session {}", sso_session_name)))
+        .with_context(|| format!("sso-section '{}' not found in config", sso_session_name))?;
+
+    let sso_region = sso_session_section
+        .get("sso_region")
+        .with_context(|| format!("sso-section '{}' has no sso_region", sso_session_name))?;
+
+    let sso_account_id = profile_section
+        .get("sso_account_id")
+        .context("Missing sso_account_id")?;
+    let sso_role_name = profile_section
+        .get("sso_role_name")
+        .context("Missing sso_role_name")?;
+    let region = profile_section.get("region").unwrap_or(sso_region);
+
+    Ok(SsoConfig {
+        sso_region: sso_region.to_string(),
+        sso_account_id: sso_account_id.to_string(),
+        sso_role_name: sso_role_name.to_string(),
+        region: region.to_string(),
+    })
 }
 
 fn get_sso_bearer_token() -> Result<String> {
@@ -164,16 +207,12 @@ fn get_codeartifact_token(
 }
 
 fn main() -> Result<()> {
-    let profile = "smartway-tools-repo-ro-007065811408";
-
+    let profile = env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string());
     println!("1. Reading SSO configuration for profile '{}'...", profile);
 
-    let sso_config = SsoConfig {
-        sso_region: "eu-west-1".to_string(),
-        sso_account_id: DOMAIN_OWNER.to_string(),
-        sso_role_name: "smartway-tools-repo-ro".to_string(),
-        region: "eu-west-3".to_string(),
-    };
+    let sso_config = get_sso_config(&profile)?;
+
+    let region = env::var("AWS_REGION").unwrap_or(sso_config.region.clone());
 
     println!("2. Finding SSO Bearer token in cache...");
     let bearer_token = get_sso_bearer_token().context("Failed to get SSO Token")?;
@@ -189,7 +228,7 @@ fn main() -> Result<()> {
         "4. Requesting CodeArtifact token for domain '{}'...",
         DOMAIN
     );
-    let ca_token = get_codeartifact_token(&creds, &sso_config.region, DOMAIN, DOMAIN_OWNER)
+    let ca_token = get_codeartifact_token(&creds, &region, DOMAIN, DOMAIN_OWNER)
         .context("Failed to get CodeArtifact token")?;
 
     println!("\n--- CodeArtifact Authorization Token ---");

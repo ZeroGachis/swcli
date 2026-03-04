@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, anyhow, bail};
 use ini::Ini;
 use serde::Deserialize;
-use std::{fs, path::PathBuf};
+use std::{env, fs, path::PathBuf};
 
 pub struct SsoConfig {
     pub sso_region: String,
@@ -12,7 +12,7 @@ pub struct SsoConfig {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct TempCredentials {
+pub struct Credentials {
     pub access_key_id: String,
     pub secret_access_key: String,
     pub session_token: String,
@@ -22,7 +22,7 @@ pub struct TempCredentials {
 #[derive(Deserialize, Debug)]
 struct TempCredentialsResponse {
     #[serde(rename = "roleCredentials")]
-    temp_credentials: TempCredentials,
+    temp_credentials: Credentials,
 }
 
 fn get_aws_directory() -> Result<PathBuf> {
@@ -31,7 +31,10 @@ fn get_aws_directory() -> Result<PathBuf> {
     Ok(dir)
 }
 
-pub fn get_config(profile: &str) -> Result<SsoConfig> {
+pub fn get_config_from_profile() -> Result<SsoConfig> {
+    let profile = env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string());
+    log::debug!("Searching SSO configuration for profile '{}'...", profile);
+
     let config_path = get_aws_directory()?.join("config");
     let conf = Ini::load_from_file(&config_path).context("Failed to read ~/.aws/config")?;
 
@@ -91,7 +94,7 @@ pub fn get_bearer_token() -> Result<String> {
     bail!("Could not find a valid SSO accessToken in the cache.")
 }
 
-pub fn get_temp_credentials(config: &SsoConfig, bearer_token: &str) -> Result<TempCredentials> {
+pub fn request_temp_credentials(config: &SsoConfig, bearer_token: &str) -> Result<Credentials> {
     let role_encoded = urlencoding::encode(&config.sso_role_name);
     let url = format!(
         "https://portal.sso.{}.amazonaws.com/federation/credentials?account_id={}&role_name={}",
@@ -108,9 +111,40 @@ pub fn get_temp_credentials(config: &SsoConfig, bearer_token: &str) -> Result<Te
         .read_json::<TempCredentialsResponse>()
         .map_err(|e| anyhow!("Failed to parse payload: {}", e))?;
 
-    Ok(TempCredentials {
+    Ok(Credentials {
         access_key_id: temp_credentials.access_key_id,
         secret_access_key: temp_credentials.secret_access_key,
         session_token: temp_credentials.session_token,
     })
+}
+
+pub fn get_credentials_from_env() -> Option<Credentials> {
+    let aws_access_key_id = env::var("AWS_ACCESS_KEY_ID").ok();
+    let aws_secret_access_key = env::var("AWS_SECRET_ACCESS_KEY").ok();
+    let aws_session_token = env::var("AWS_SESSION_TOKEN").ok();
+
+    if let Some(aws_access_key_id) = aws_access_key_id
+        && let Some(aws_secret_access_key) = aws_secret_access_key
+        && let Some(aws_session_token) = aws_session_token
+    {
+        log::debug!(
+            "Use credentials provided with 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY' & 'AWS_SESSION_TOKEN' env variables"
+        );
+        return Some(Credentials {
+            access_key_id: aws_access_key_id,
+            secret_access_key: aws_secret_access_key,
+            session_token: aws_session_token,
+        });
+    }
+
+    None
+}
+
+pub fn get_temp_credentials(sso_config: &SsoConfig) -> Result<Credentials> {
+    log::debug!("Finding SSO Bearer token in cache");
+    let bearer_token = get_bearer_token().context("Failed to get SSO Token")?;
+
+    log::debug!("Fetching temporary AWS credentials with bearer token");
+
+    request_temp_credentials(sso_config, &bearer_token).context("Failed to fetch temp creds")
 }

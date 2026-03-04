@@ -1,8 +1,7 @@
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Result, anyhow, bail};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
-use std::env;
 use ureq::Agent;
 
 use crate::aws::sso;
@@ -15,8 +14,8 @@ fn sign(key: &[u8], msg: &str) -> Vec<u8> {
     mac.finalize().into_bytes().to_vec()
 }
 
-fn request_codeartifact_token(
-    creds: &sso::TempCredentials,
+pub fn request_codeartifact_token(
+    creds: &sso::Credentials,
     region: &str,
     domain: &str,
     domain_owner: &str,
@@ -101,30 +100,4 @@ fn request_codeartifact_token(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
         .ok_or_else(|| anyhow!("Failed to parse authorizationToken from response"))
-}
-
-pub fn get_authorization_token(
-    domain: String,
-    domain_owner: String,
-    region: Option<String>,
-) -> Result<String> {
-    let profile = env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string());
-    log::debug!("Reading SSO configuration for profile '{}'...", profile);
-
-    let sso_config = sso::get_config(&profile)?;
-
-    let region = region.unwrap_or(sso_config.region.clone());
-
-    log::debug!("Finding SSO Bearer token in cache");
-    let bearer_token = sso::get_bearer_token().context("Failed to get SSO Token")?;
-
-    log::debug!("Fetching temporary AWS credentials with bearer token");
-    let creds = sso::get_temp_credentials(&sso_config, &bearer_token)
-        .context("Failed to fetch temp creds")?;
-
-    log::debug!("Requesting CodeArtifact token for domain '{}'", domain);
-    let ca_token = request_codeartifact_token(&creds, &region, &domain, &domain_owner)
-        .context("Failed to get CodeArtifact token")?;
-
-    Ok(ca_token)
 }

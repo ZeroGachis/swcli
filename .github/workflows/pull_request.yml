@@ -14,10 +14,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+      - name: Cache the rust toolchain
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.rustup
+            ~/.cargo
+          key: rust-toolchain-${{ runner.os }}-${{ hashFiles('.config/mise.toml') }}
       - uses: jdx/mise-action@v3
         with:
           install: true
-          cache: true
+          cache: true # cache only mise metadata (the rust toolchain cache is handled above)
       - name: Run static analysis
         run: prek run
       - name: Tests

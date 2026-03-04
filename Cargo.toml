@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.102"                                     # Error handling
 chrono = "0.4"                                         # Timestamps for SigV4
+clap = { version = "4.5.60", features = ["derive"] }   # CLI argument parser
 dirs = "6.0"                                           # Resolving ~/.aws correctly
 hex = "0.4"                                            # Hex encoding
 hmac = "0.12"                                          # Cryptography for SigV4

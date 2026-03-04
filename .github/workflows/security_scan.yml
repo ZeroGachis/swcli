@@ -1,0 +1,20 @@
+name: Security Scan
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 10 * * 1"
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+  checks: write
+  actions: read
+
+jobs:
+  security_scan:
+    uses: ZeroGachis/.github/.github/workflows/security_scan_repo.yml@v5
+    secrets: inherit

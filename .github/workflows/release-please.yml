@@ -9,6 +9,7 @@ on:
 jobs:
   release-please:
     uses: ZeroGachis/.github/.github/workflows/gh-release-please.yml@v6
+    secrets: inherit
     permissions:
       contents: write
       pull-requests: write

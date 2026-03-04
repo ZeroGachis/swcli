@@ -8,8 +8,10 @@ anyhow = "1.0.102"                                     # Error handling
 chrono = "0.4"                                         # Timestamps for SigV4
 clap = { version = "4.5.60", features = ["derive"] }   # CLI argument parser
 dirs = "6.0"                                           # Resolving ~/.aws correctly
+env_logger = "0.11.9"                                  # Logger configured with env variables
 hex = "0.4"                                            # Hex encoding
 hmac = "0.12"                                          # Cryptography for SigV4
+log = "0.4.29"                                         # Logger facade
 rust-ini = "0.21.3"                                    # Parsing AWS config file
 serde = { version = "1.0.228", features = ["derive"] } # Parsing JSON
 serde_json = "1.0"                                     # Parsing JSON

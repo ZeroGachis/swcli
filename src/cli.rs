@@ -38,7 +38,7 @@ pub fn execute() -> Result<()> {
                 domain_owner,
                 region,
             } => {
-                println!("Fetching authorization token...");
+                log::debug!("CodeArtifact - Get authorization token");
                 let token = codeartifact::get_authorization_token(domain, domain_owner, region)?;
                 println!("{}", token);
             }

@@ -109,32 +109,22 @@ pub fn get_authorization_token(
     region: Option<String>,
 ) -> Result<String> {
     let profile = env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string());
-    println!("1. Reading SSO configuration for profile '{}'...", profile);
+    log::debug!("Reading SSO configuration for profile '{}'...", profile);
 
     let sso_config = sso::get_config(&profile)?;
 
     let region = region.unwrap_or(sso_config.region.clone());
 
-    println!("2. Finding SSO Bearer token in cache...");
+    log::debug!("Finding SSO Bearer token in cache");
     let bearer_token = sso::get_bearer_token().context("Failed to get SSO Token")?;
 
-    println!(
-        "3. Fetching temporary AWS credentials with {}...",
-        bearer_token
-    );
+    log::debug!("Fetching temporary AWS credentials with bearer token");
     let creds = sso::get_temp_credentials(&sso_config, &bearer_token)
         .context("Failed to fetch temp creds")?;
 
-    println!(
-        "4. Requesting CodeArtifact token for domain '{}'...",
-        domain
-    );
+    log::debug!("Requesting CodeArtifact token for domain '{}'", domain);
     let ca_token = request_codeartifact_token(&creds, &region, &domain, &domain_owner)
         .context("Failed to get CodeArtifact token")?;
-
-    println!("\n--- CodeArtifact Authorization Token ---");
-    println!("{}", ca_token);
-    println!("----------------------------------------");
 
     Ok(ca_token)
 }

@@ -7,7 +7,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  BINARY_NAME: swcli
 
 jobs:
   build:
@@ -19,12 +18,12 @@ jobs:
         include:
           # Ubuntu / Debian — dynamically linked against glibc
           - target: x86_64-unknown-linux-gnu
-            artifact_name: ${{ env.BINARY_NAME }}-linux-gnu-x86_64
+            artifact_name: swcli-linux-gnu-x86_64
             use_cross: false
 
           # Alpine / musl — fully static binary
           - target: x86_64-unknown-linux-musl
-            artifact_name: ${{ env.BINARY_NAME }}-linux-musl-x86_64
+            artifact_name: swcli-linux-musl-x86_64
             use_cross: true
 
     steps:

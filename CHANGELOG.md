@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.1...swcli-0.1.2) (2026-03-05)
+
+
+### Miscellaneous Chores
+
+* **release:** Define artifact names explicitly as we cannot access env in the matrix section ([0c714f3](https://github.com/ZeroGachis/swcli/commit/0c714f39bcd9b5ef7cd2dac1845a69640692ebf8))
+
 ## [0.1.1](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.0...swcli-0.1.1) (2026-03-05)
 
 

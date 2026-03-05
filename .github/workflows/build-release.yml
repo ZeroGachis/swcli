@@ -1,0 +1,68 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+env:
+  CARGO_TERM_COLOR: always
+  BINARY_NAME: swcli
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ubuntu / Debian — dynamically linked against glibc
+          - target: x86_64-unknown-linux-gnu
+            artifact_name: ${{ env.BINARY_NAME }}-linux-gnu-x86_64
+            use_cross: false
+
+          # Alpine / musl — fully static binary
+          - target: x86_64-unknown-linux-musl
+            artifact_name: ${{ env.BINARY_NAME }}-linux-musl-x86_64
+            use_cross: true
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Cache the rust toolchain
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.rustup
+            ~/.cargo
+          key: rust-toolchain-${{ runner.os }}-${{ hashFiles('.config/mise.toml') }}
+      - uses: jdx/mise-action@v3
+        with:
+          install: true
+          cache: true # cache only mise metadata (the rust toolchain cache is handled above with actions/cache)
+
+      # Install the platform target
+      - run: rustup target add ${{ matrix.target }}
+
+      # cross handles the musl cross-compilation via Docker
+      - name: Install cross
+        if: matrix.use_cross
+        run: cargo binstall --no-confirm cross
+
+      - name: Build (native)
+        if: ${{ !matrix.use_cross }}
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build (cross / musl)
+        if: matrix.use_cross
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Prepare binary
+        run: |
+          cp target/${{ matrix.target }}/release/${{ env.BINARY_NAME }} \
+             ${{ matrix.artifact_name }}
+
+      - name: Upload binary to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_name }}

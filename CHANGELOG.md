@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.2...swcli-0.1.3) (2026-03-05)
+
+
+### Miscellaneous Chores
+
+* **ci:** Only run security scan workflow once a week ([dcefc04](https://github.com/ZeroGachis/swcli/commit/dcefc04d1c50e00c2c2800455785a175aca05393))
+* **release:** Fix binary path ([e24a4a6](https://github.com/ZeroGachis/swcli/commit/e24a4a6f2a5187a915923f2343c4c9183a7bc743))
+
 ## [0.1.2](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.1...swcli-0.1.2) (2026-03-05)
 
 

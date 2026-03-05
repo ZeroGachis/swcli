@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.0...swcli-0.1.1) (2026-03-05)
+
+
+### Miscellaneous Chores
+
+* **ci:** Add a workflow to build a binaries and attach them the the latest release ([943ab1a](https://github.com/ZeroGachis/swcli/commit/943ab1a49fa0f2fc87f6968d51d3445b7362a5ac))
+
 ## 0.1.0 (2026-03-05)
 
 

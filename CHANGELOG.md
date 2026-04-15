@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.4](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.3...swcli-0.1.4) (2026-04-15)
+
+
+### Miscellaneous Chores
+
+* Bump security scan workflow from v5 to v6 ([00181c6](https://github.com/ZeroGachis/swcli/commit/00181c6ba1b4e86b8d3d5ed056ec58a49955e00e))
+* Bump security scan workflow from v5 to v6 ([9f1ff98](https://github.com/ZeroGachis/swcli/commit/9f1ff98a5ec8d16dac7231c831511a4ec130f827))
+
+
+### Continuous Integration
+
+* Add security-scan workflow triggered once a week ([feb39ca](https://github.com/ZeroGachis/swcli/commit/feb39cab2439f215cc452efe93c110a02373c6d3))
+* Remove deprecated security_scan workflow ([b13f854](https://github.com/ZeroGachis/swcli/commit/b13f854ac2e2af32ae18671166753f76e2b89f68))
+
 ## [0.1.3](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.2...swcli-0.1.3) (2026-03-05)
 
 

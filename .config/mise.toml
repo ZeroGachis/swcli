@@ -1,4 +1,4 @@
 [tools]
 prek = "latest"
-rust = { version = "latest", components = "rustfmt,clippy" }
+rust = { version = "1.95.0", components = "rustfmt,clippy" }
 cargo-binstall = "latest"

@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.4](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.3...swcli-0.1.4) (2026-05-20)
+
+
+### Miscellaneous Chores
+
+* Bump security scan workflow from v5 to v6 ([00181c6](https://github.com/ZeroGachis/swcli/commit/00181c6ba1b4e86b8d3d5ed056ec58a49955e00e))
+* Bump security scan workflow from v5 to v6 ([9f1ff98](https://github.com/ZeroGachis/swcli/commit/9f1ff98a5ec8d16dac7231c831511a4ec130f827))
+* **ci:** Bump release workflows to use Node 24 instead of Node 20 which is deprecated ([f866ac0](https://github.com/ZeroGachis/swcli/commit/f866ac008c98c8087f6e7a00b944f8677a571c1a))
+* **ci:** Release a prebuilt binary for macOS ([58fb4e1](https://github.com/ZeroGachis/swcli/commit/58fb4e1f8a5198acb862c0833a370c93585b9170))
+* **sec:** Update rustls-webpki to fix CVEs ([6c66cbd](https://github.com/ZeroGachis/swcli/commit/6c66cbd7063633cafdf01bdd89aa4ed66f926940))
+* Use specific version of Rust ([57d69fc](https://github.com/ZeroGachis/swcli/commit/57d69fc2c7b233cda5e8807b1f4970c40a65fc08))
+
+
+### Continuous Integration
+
+* Add security-scan workflow triggered once a week ([feb39ca](https://github.com/ZeroGachis/swcli/commit/feb39cab2439f215cc452efe93c110a02373c6d3))
+* Remove deprecated security_scan workflow ([b13f854](https://github.com/ZeroGachis/swcli/commit/b13f854ac2e2af32ae18671166753f76e2b89f68))
+
 ## [0.1.3](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.2...swcli-0.1.3) (2026-03-05)
 
 

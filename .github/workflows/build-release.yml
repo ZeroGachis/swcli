@@ -11,7 +11,7 @@ env:
 jobs:
   build:
     name: Build ${{ matrix.target }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       fail-fast: false
       matrix:
@@ -20,11 +20,19 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             artifact_name: swcli-linux-gnu-x86_64
             use_cross: false
+            runs_on: ubuntu-latest
 
           # Alpine / musl — fully static binary
           - target: x86_64-unknown-linux-musl
             artifact_name: swcli-linux-musl-x86_64
             use_cross: true
+            runs_on: ubuntu-latest
+
+          # macOS Apple Silicon
+          - target: aarch64-apple-darwin
+            artifact_name: swcli-macos-arm64
+            use_cross: false
+            runs_on: macos-latest
 
     steps:
       - uses: actions/checkout@v6

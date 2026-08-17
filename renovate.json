@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "enabled": false,
+      "matchPackageNames": [
+        "/.*/"
+      ]
+    },
+    {
+      "description": "Enable updates for Backstage and community plugins only",
+      "enabled": true,
+      "groupName": "backstage",
+      "groupSlug": "backstage",
+      "matchPackageNames": [
+        "/^@backstage//",
+        "/^@backstage-community//",
+        "/^@roadiehq//",
+        "/^@secustor/backstage-/",
+        "/^@spreadshirt/backstage-/",
+        "/^@iiben_orgii/backstage-/"
+      ]
+    }
+  ]
+}

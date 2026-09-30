@@ -1,9 +1,13 @@
 use anyhow::{Context, Result, anyhow, bail};
+use chrono::{DateTime, Utc};
 use ini::Ini;
 use serde::Deserialize;
+use sha1::{Digest, Sha1};
 use std::{env, fs, path::PathBuf};
 
 pub struct SsoConfig {
+    pub profile: String,
+    pub sso_session_name: String,
     pub sso_region: String,
     pub sso_account_id: String,
     pub sso_role_name: String,
@@ -16,6 +20,14 @@ pub struct Credentials {
     pub access_key_id: String,
     pub secret_access_key: String,
     pub session_token: String,
+}
+
+// Token written by 'aws sso login' in ~/.aws/sso/cache
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct CachedToken {
+    access_token: String,
+    expires_at: String,
 }
 
 // 2. Define a wrapper struct to match the root of the JSON
@@ -69,6 +81,8 @@ pub fn get_config_from_profile() -> Result<SsoConfig> {
     let region = profile_section.get("region").unwrap_or(sso_region);
 
     Ok(SsoConfig {
+        profile,
+        sso_session_name: sso_session_name.to_string(),
         sso_region: sso_region.to_string(),
         sso_account_id: sso_account_id.to_string(),
         sso_role_name: sso_role_name.to_string(),
@@ -76,22 +90,53 @@ pub fn get_config_from_profile() -> Result<SsoConfig> {
     })
 }
 
-pub fn get_bearer_token() -> Result<String> {
-    let cache_dir = get_aws_directory()?.join("sso").join("cache");
-    let entries = fs::read_dir(&cache_dir)
-        .context("SSO cache dir not found. Did you run 'aws sso login'?")?;
+// The AWS CLI names the cache file after the SHA-1 of the sso-session name
+fn get_cache_file_name(sso_session_name: &str) -> String {
+    format!(
+        "{}.json",
+        hex::encode(Sha1::digest(sso_session_name.as_bytes()))
+    )
+}
 
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) == Some("json")
-            && let Ok(content) = fs::read_to_string(&path)
-            && let Ok(json) = serde_json::from_str::<serde_json::Value>(&content)
-            && let Some(token) = json.get("accessToken").and_then(|v| v.as_str())
-        {
-            return Ok(token.to_string());
-        }
+fn parse_expiration(expires_at: &str) -> Result<DateTime<Utc>> {
+    DateTime::parse_from_rfc3339(expires_at)
+        .map(|date| date.with_timezone(&Utc))
+        .with_context(|| format!("Invalid expiresAt '{}'", expires_at))
+}
+
+fn parse_cached_token(content: &str, now: DateTime<Utc>) -> Result<String> {
+    let token: CachedToken = serde_json::from_str(content).context("Invalid SSO token file")?;
+    let expires_at = parse_expiration(&token.expires_at)?;
+    if expires_at <= now {
+        bail!("SSO token expired at {}", expires_at);
     }
-    bail!("Could not find a valid SSO accessToken in the cache.")
+    Ok(token.access_token)
+}
+
+pub fn get_bearer_token(config: &SsoConfig) -> Result<String> {
+    let cache_file = get_aws_directory()?
+        .join("sso")
+        .join("cache")
+        .join(get_cache_file_name(&config.sso_session_name));
+    log::debug!(
+        "Reading SSO token of session '{}' from '{}'",
+        config.sso_session_name,
+        cache_file.display()
+    );
+
+    let login_hint = format!("Run 'aws sso login --profile {}'", config.profile);
+    let content = fs::read_to_string(&cache_file).with_context(|| {
+        format!(
+            "No cached SSO token for session '{}'. {}",
+            config.sso_session_name, login_hint
+        )
+    })?;
+    parse_cached_token(&content, Utc::now()).with_context(|| {
+        format!(
+            "No valid SSO token for session '{}'. {}",
+            config.sso_session_name, login_hint
+        )
+    })
 }
 
 pub fn request_temp_credentials(config: &SsoConfig, bearer_token: &str) -> Result<Credentials> {
@@ -142,9 +187,32 @@ pub fn get_credentials_from_env() -> Option<Credentials> {
 
 pub fn get_temp_credentials(sso_config: &SsoConfig) -> Result<Credentials> {
     log::debug!("Finding SSO Bearer token in cache");
-    let bearer_token = get_bearer_token().context("Failed to get SSO Token")?;
+    let bearer_token = get_bearer_token(sso_config).context("Failed to get SSO Token")?;
 
     log::debug!("Fetching temporary AWS credentials with bearer token");
 
     request_temp_credentials(sso_config, &bearer_token).context("Failed to fetch temp creds")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cache_file_name_is_sha1_of_session_name() {
+        assert_eq!(
+            get_cache_file_name("smartway-tools"),
+            "0bd1796a1cb9055f9afa37f28cd16d67d9337e95.json"
+        );
+    }
+
+    #[test]
+    fn parse_cached_token_rejects_expired_token() {
+        let content = r#"{"accessToken": "token", "expiresAt": "2026-09-30T09:42:00Z"}"#;
+        let before = parse_expiration("2026-09-30T09:00:00Z").unwrap();
+        let after = parse_expiration("2026-09-30T10:00:00Z").unwrap();
+
+        assert_eq!(parse_cached_token(content, before).unwrap(), "token");
+        assert!(parse_cached_token(content, after).is_err());
+    }
 }

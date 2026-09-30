@@ -15,6 +15,7 @@ log = "0.4.29"                                         # Logger facade
 rust-ini = "0.21.3"                                    # Parsing AWS config file
 serde = { version = "1.0.228", features = ["derive"] } # Parsing JSON
 serde_json = "1.0"                                     # Parsing JSON
+sha1 = "0.10"                                          # Resolving SSO cache file name
 sha2 = "0.10"                                          # Cryptography for SigV4
 ureq = { version = "3.2", features = ["json"] }        # Minimal HTTP client
 urlencoding = "2.1"                                    # URL escaping

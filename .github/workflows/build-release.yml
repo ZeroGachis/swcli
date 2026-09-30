@@ -35,15 +35,15 @@ jobs:
             runs_on: macos-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Cache the rust toolchain
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.rustup
             ~/.cargo
           key: rust-toolchain-${{ runner.os }}-${{ hashFiles('.config/mise.toml') }}
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
         with:
           install: true
           cache: true # cache only mise metadata (the rust toolchain cache is handled above with actions/cache)
@@ -68,7 +68,7 @@ jobs:
         run: cp target/${{ matrix.target }}/release/swcli ${{ matrix.artifact_name }}
 
       - name: Upload binary to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ matrix.artifact_name }}
 

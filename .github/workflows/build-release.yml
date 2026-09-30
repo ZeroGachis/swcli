@@ -71,3 +71,43 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.artifact_name }}
+
+  # Maintain mutable `swcli-X` and `swcli-X.Y` releases pointing to the latest `swcli-X.Y.Z`,
+  # so consumers can pin a major or minor version instead of a full version.
+  mutable-releases:
+    name: Update mutable major and minor releases
+    needs: build
+    if: github.event_name == 'release' && !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download release binaries
+        run: gh release download "$TAG" --dir dist
+
+      - name: Update mutable releases
+        run: |
+          if [[ ! "$TAG" =~ ^swcli-([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Tag $TAG is not a swcli-X.Y.Z tag, skipping"
+            exit 0
+          fi
+          major="${BASH_REMATCH[1]}"
+          minor="${BASH_REMATCH[2]}"
+
+          for version in "$major" "$major.$minor"; do
+            mutable_tag="swcli-$version"
+            git push --force origin "$GITHUB_SHA:refs/tags/$mutable_tag"
+            if ! gh release view "$mutable_tag" > /dev/null 2>&1; then
+              gh release create "$mutable_tag" \
+                --verify-tag \
+                --latest=false \
+                --title "swcli: v$version" \
+                --notes "Mutable release tracking the latest swcli $version.x version."
+            fi
+            gh release upload "$mutable_tag" dist/* --clobber
+          done

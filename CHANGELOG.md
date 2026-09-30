@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.5](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.4...swcli-0.1.5) (2026-09-30)
+
+
+### Bug Fixes
+
+* Only read the cached token of the SSO profile used ([5271ecd](https://github.com/ZeroGachis/swcli/commit/5271ecdcbb3a9f55e120ffa5326a398e59b8be90))
+
+
+### Miscellaneous Chores
+
+* **ci:** Bump github action workflow versions ([9f08df5](https://github.com/ZeroGachis/swcli/commit/9f08df5d12068e74a213eff14ec641fe2981ea03))
+* **ci:** Expose mutable release tag X and X.Y to free user from tagging a full version ([f19a40c](https://github.com/ZeroGachis/swcli/commit/f19a40cf552eab3346c4aa028a4f33c3dcd32dd8))
+* **sec:** Fix security vulnerability GHSA-pwjx-qhcg-rvj4 ([ca8048a](https://github.com/ZeroGachis/swcli/commit/ca8048a6ace243a803aacb7646e15e2389aab0d3))
+
 ## [0.1.4](https://github.com/ZeroGachis/swcli/compare/swcli-0.1.3...swcli-0.1.4) (2026-05-20)
 
 
